@@ -12,8 +12,8 @@ public class GlobalControllerAdvice {
 
     @ExceptionHandler(value = GlobalException.class)
     public ResponseEntity<?> handleGlobalException(GlobalException e) {
-        log.warn("error message {} {}",e.getErrorCode().getMessage(), e);
-        return ResponseEntity.status(e.getErrorCode().getStatus())
-                .body(ResponseDto.fail(e.getErrorCode().getStatus().value(), e.getErrorCode().getMessage()));
+        log.warn("error message {}",e.getErrorCode().getMessage(), e);
+        return ResponseEntity.status(e.getErrorCode().getHttpStatus())
+                .body(ResponseDto.fail(e.getErrorCode().getStatus(), e.getErrorCode().getMessage()));
     }
 }

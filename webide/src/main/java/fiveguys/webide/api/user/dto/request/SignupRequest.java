@@ -29,4 +29,8 @@ public class SignupRequest {
                 .role(UserRole.USER)
                 .build();
     }
+
+    public boolean getIsValid() {
+        return isValid;
+    }
 }

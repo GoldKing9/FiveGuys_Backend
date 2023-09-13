@@ -22,10 +22,12 @@ public class User {
     private UserRole role;
 
     @Builder
-    public User(String email, String nickname, String password, UserRole role) {
+    public User(Long id, String email, String nickname, String password, UserRole role) {
+        this.id = id;
         this.email = email;
         this.nickname = nickname;
         this.password = password;
         this.role = role;
     }
+
 }
