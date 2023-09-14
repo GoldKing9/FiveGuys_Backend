@@ -19,7 +19,6 @@ public class SignupRequest {
 
     @NotBlank(message = "닉네임은 필수 입력사항 입니다")
     private String nickname;
-    private boolean isValid;
 
     public User toEntity(String password) {
         return User.builder()
@@ -30,7 +29,4 @@ public class SignupRequest {
                 .build();
     }
 
-    public boolean getIsValid() {
-        return isValid;
-    }
 }

@@ -6,13 +6,12 @@ import fiveguys.webide.api.user.dto.request.TokenRefreshRequest;
 import fiveguys.webide.api.user.dto.response.LoginUserResponse;
 import fiveguys.webide.api.user.service.UserService;
 import fiveguys.webide.common.dto.ResponseDto;
+import fiveguys.webide.config.auth.LoginUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -34,5 +33,10 @@ public class UserController {
     @PostMapping("/reissue")
     public ResponseDto<LoginUserResponse> reissue(@Valid @RequestBody TokenRefreshRequest request) {
         return ResponseDto.success("토큰 재발행을 성공했습니다.", userService.reissue(request));
+    }
+
+    @GetMapping("/test")
+    public LoginUser test(@AuthenticationPrincipal LoginUser loginUser) {
+        return loginUser;
     }
 }

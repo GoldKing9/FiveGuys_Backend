@@ -4,6 +4,7 @@ import fiveguys.webide.api.user.dto.request.LoginRequest;
 import fiveguys.webide.api.user.dto.request.SignupRequest;
 import fiveguys.webide.api.user.dto.request.TokenRefreshRequest;
 import fiveguys.webide.api.user.dto.response.LoginUserResponse;
+import fiveguys.webide.common.error.ErrorCode;
 import fiveguys.webide.common.error.GlobalException;
 import fiveguys.webide.config.auth.LoginUser;
 import fiveguys.webide.config.jwt.JwtUtils;
@@ -23,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 import static fiveguys.webide.common.error.ErrorCode.EXPIRED_REFRESH_TOKEN;
-import static fiveguys.webide.common.error.ErrorCode.RETRY_EMAIL_AUTH;
 
 @Service
 @RequiredArgsConstructor
@@ -37,8 +37,11 @@ public class UserService {
 
     @Transactional
     public void signup(SignupRequest request) {
-        if (!request.getIsValid()) {
-            throw new GlobalException(RETRY_EMAIL_AUTH);
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new GlobalException(ErrorCode.EXIST_EMAIL);
+        }
+        if (userRepository.existsByNickname(request.getNickname())) {
+            throw new GlobalException(ErrorCode.EXIST_NICKNAME);
         }
         User user = request.toEntity(bCryptPasswordEncoder.encode(request.getPassword()));
         userRepository.save(user);
