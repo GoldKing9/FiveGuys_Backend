@@ -25,7 +25,7 @@ class GlobalControllerAdvice {
         val fieldErrors = e.fieldErrors
         val errors: ArrayList<ResponseDto<ErrorResponse>> = ArrayList()
         for (fieldError in fieldErrors) {
-            errors.add(ResponseDto.fail<ErrorResponse>(fieldError.field, fieldError.defaultMessage ?: null))
+            errors.add(ResponseDto.fail(fieldError.field, fieldError.defaultMessage ?: null))
         }
         return ResponseEntity.status(e.statusCode)
             .body(errors)

@@ -15,7 +15,6 @@ data class SignupRequest(
     val password: String,
     @field:NotBlank(message = "닉네임은 필수 입력사항 입니다")
     val nickname: String,
-    val isValid: Boolean
 ){
     fun toEntity(password: String): User {
         return User(

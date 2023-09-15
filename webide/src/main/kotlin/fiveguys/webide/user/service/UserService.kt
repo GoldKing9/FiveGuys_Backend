@@ -26,8 +26,9 @@ class UserService(
 
     @Transactional
     fun signup(request: SignupRequest) {
-        if (!request.isValid) {
-            throw GlobalException(ErrorCode.RETRY_EMAIL_AUTH)
+        when {
+            userRepository.existsByEmail(request.email) -> throw GlobalException(ErrorCode.EXIST_EMAIL)
+            userRepository.existsByNickname(request.nickname) -> throw GlobalException(ErrorCode.EXIST_NICKNAME)
         }
         val user = request.toEntity(bCryptPasswordEncoder.encode(request.password))
         userRepository.save(user)
