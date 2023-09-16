@@ -1,5 +1,6 @@
 package fiveguys.webide.user.service
 
+import fiveguys.webide.common.aop.Trace
 import fiveguys.webide.config.jwt.JwtUtils
 import fiveguys.webide.user.domain.UserRepository
 import fiveguys.webide.user.dto.request.LoginRequest
@@ -25,6 +26,7 @@ class UserService(
 ) {
 
     @Transactional
+    @Trace
     fun signup(request: SignupRequest) {
         when {
             userRepository.existsByEmail(request.email) -> throw GlobalException(ErrorCode.EXIST_EMAIL)

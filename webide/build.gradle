@@ -7,6 +7,7 @@ plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.8.20'
     id 'org.jetbrains.kotlin.plugin.jpa' version '1.8.20'
     id 'org.jetbrains.kotlin.plugin.spring' version '1.8.20'
+    id 'org.jetbrains.kotlin.kapt' version '1.8.20'
 }
 
 group = 'FiveGuys'
@@ -44,9 +45,9 @@ dependencies {
 
     // Querydsl 추가
     implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
-    annotationProcessor "com.querydsl:querydsl-apt:${dependencyManagement.importedProperties['querydsl.version']}:jakarta"
-    annotationProcessor "jakarta.annotation:jakarta.annotation-api"
-    annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+    kapt ("com.querydsl:querydsl-apt:5.0.0:jakarta")
+    kapt ("jakarta.annotation:jakarta.annotation-api")
+    kapt ("jakarta.persistence:jakarta.persistence-api")
 
     // 모니터링
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
@@ -67,3 +68,4 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+

@@ -20,6 +20,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 class SecurityConfig(
     private val jwtUtils: JwtUtils,
     private val userDetailService: UserDetailsService,
+    private val authenticationEntryPoint: CustomAuthenticationEntryPoint,
 ) {
 
     @Bean
@@ -53,7 +54,10 @@ class SecurityConfig(
             .httpBasic().disable()
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
+            .authenticationProvider(authenticationProvider())
             .addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter::class.java)
+            .exceptionHandling().authenticationEntryPoint(authenticationEntryPoint)
+            .and()
             .authorizeHttpRequests { authorizeRequests ->
                 authorizeRequests
                     .requestMatchers("/api/auth/signup","/api/auth/login").permitAll()

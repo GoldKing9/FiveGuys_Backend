@@ -1,6 +1,8 @@
 package fiveguys.webide.common.error
 
+import fiveguys.webide.common.aop.ThreadLocalContextHolder
 import fiveguys.webide.common.dto.ResponseDto
+import fiveguys.webide.common.logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.MethodArgumentNotValidException
@@ -10,18 +12,20 @@ import java.util.ArrayList
 
 @RestControllerAdvice
 class GlobalControllerAdvice {
-    val log = LoggerFactory.getLogger(this.javaClass)
+    val log = logger()
 
     @ExceptionHandler(GlobalException::class)
     fun handleGlobalException(e: GlobalException): ResponseEntity<*> {
-        log.warn("error message {}",e.errorCode.message, e);
+        val traceId = ThreadLocalContextHolder.getTraceId()
+        log.error("ERROR TRACING_ID : {} ERROR MESSAGE : {}", traceId, e.errorCode.message, e)
         return ResponseEntity.status(e.errorCode.httpStatus)
             .body(ResponseDto.fail<ErrorResponse>(e.errorCode.status, e.errorCode.message))
     }
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun validException(e: MethodArgumentNotValidException): ResponseEntity<*> {
-        log.warn("error message {}",e.message, e);
+        val traceId = ThreadLocalContextHolder.getTraceId()
+        log.error("ERROR TRACING_ID : {} ERROR MESSAGE :{}", traceId, e.message, e)
         val fieldErrors = e.fieldErrors
         val errors: ArrayList<ResponseDto<ErrorResponse>> = ArrayList()
         for (fieldError in fieldErrors) {
