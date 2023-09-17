@@ -1,5 +1,6 @@
 package fiveguys.webide.common.error
 
-class GlobalException(errorCode: ErrorCode) : RuntimeException() {
-    val errorCode: ErrorCode = errorCode
+class GlobalException(val errorCode: ErrorCode) : RuntimeException() {
+    override val message: String
+        get() = errorCode.message
 }
