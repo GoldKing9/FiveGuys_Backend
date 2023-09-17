@@ -34,10 +34,4 @@ class UserController(
         return ResponseDto.success("로그인에 성공했습니다.", userService.login(request))
     }
 
-    @GetMapping("/test")
-    fun test(@AuthenticationPrincipal loginUser: LoginUser?): LoginUser? {
-        println("ddddddddddddddddddddddddddddddddddd")
-        return loginUser
-    }
-
 }

@@ -28,9 +28,11 @@ class UserService(
     @Transactional
     @Trace
     fun signup(request: SignupRequest) {
-        when {
-            userRepository.existsByEmail(request.email) -> throw GlobalException(ErrorCode.EXIST_EMAIL)
-            userRepository.existsByNickname(request.nickname) -> throw GlobalException(ErrorCode.EXIST_NICKNAME)
+        if (userRepository.existsByEmail(request.email)) {
+            throw GlobalException(ErrorCode.EXIST_EMAIL)
+        }
+        if (userRepository.existsByNickname(request.nickname)) {
+            throw GlobalException(ErrorCode.EXIST_NICKNAME)
         }
         val user = request.toEntity(bCryptPasswordEncoder.encode(request.password))
         userRepository.save(user)

@@ -13,6 +13,7 @@ import fiveguys.webide.user.domain.UserRole
 import io.jsonwebtoken.*
 import io.jsonwebtoken.io.Decoders
 import io.jsonwebtoken.security.Keys
+import io.jsonwebtoken.security.SignatureException
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.beans.factory.annotation.Value
@@ -65,6 +66,8 @@ class JwtUtils(
             setResponse(response, ErrorCode.EXPIRED_ACCESS_TOKEN, e)
         } catch (e: UnsupportedJwtException) {
             setResponse(response, ErrorCode.UNSUPPORTED_JWT_TOKEN, e)
+        } catch (e: SignatureException) {
+            setResponse(response, ErrorCode.INVALID_SIGNATURE_JWT_TOKEN, e)
         }
         return false
     }
