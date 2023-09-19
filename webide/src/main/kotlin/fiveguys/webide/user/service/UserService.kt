@@ -46,9 +46,9 @@ class UserService(
         val loginUser = authentication.principal as LoginUser
         val accessToken = jwtUtils.generateAccessTokenFromLoginUser(loginUser)
         return LoginUserResponse(
-            loginUser,
-            accessToken,
-            "refreshToken"
+            loginUser = loginUser,
+            accessToken = accessToken,
+            refreshToken = "refreshToken"
         )
     }
 }

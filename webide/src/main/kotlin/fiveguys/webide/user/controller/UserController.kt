@@ -1,15 +1,13 @@
 package fiveguys.webide.user.controller
 
 import fiveguys.webide.common.aop.Trace
-import fiveguys.webide.user.dto.request.SignupRequest
-import fiveguys.webide.user.dto.request.LoginRequest
-import fiveguys.webide.user.dto.response.LoginUserResponse
-import fiveguys.webide.user.service.UserService
 import fiveguys.webide.common.dto.ResponseDto
-import fiveguys.webide.config.auth.LoginUser
+import fiveguys.webide.user.dto.request.LoginRequest
+import fiveguys.webide.user.dto.request.SignupRequest
+import fiveguys.webide.user.service.UserService
 import jakarta.validation.Valid
 import lombok.RequiredArgsConstructor
-import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -30,8 +28,7 @@ class UserController(
     }
 
     @PostMapping("/login")
-    fun login(@RequestBody request: LoginRequest): ResponseDto<LoginUserResponse> {
-        return ResponseDto.success("로그인에 성공했습니다.", userService.login(request))
-    }
+    fun login(@RequestBody request: LoginRequest) =
+        ResponseDto.success("로그인에 성공했습니다.", userService.login(request))
 
 }

@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration
 class QueryDslConfig(
 ) {
     @PersistenceContext
-    lateinit var em: EntityManager
+    private lateinit var em: EntityManager
     @Bean
     fun jpaQueryFactory(): JPAQueryFactory {
         return JPAQueryFactory(JPQLTemplates.DEFAULT, em)
