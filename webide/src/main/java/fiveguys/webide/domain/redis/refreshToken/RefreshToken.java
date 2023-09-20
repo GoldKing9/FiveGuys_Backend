@@ -1,4 +1,4 @@
-package fiveguys.webide.domain.redis;
+package fiveguys.webide.domain.redis.refreshToken;
 
 import fiveguys.webide.config.auth.LoginUser;
 import jakarta.persistence.Id;

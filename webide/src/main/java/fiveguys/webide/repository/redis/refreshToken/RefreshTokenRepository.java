@@ -1,6 +1,6 @@
-package fiveguys.webide.repository.redis;
+package fiveguys.webide.repository.redis.refreshToken;
 
-import fiveguys.webide.domain.redis.RefreshToken;
+import fiveguys.webide.domain.redis.refreshToken.RefreshToken;
 import org.springframework.data.repository.CrudRepository;
 
 import java.util.Optional;
