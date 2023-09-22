@@ -5,8 +5,13 @@ import fiveguys.webide.api.project.dto.request.FolderCreateRequest;
 import fiveguys.webide.api.project.dto.response.FileReadResponse;
 import fiveguys.webide.api.project.service.ProjectService;
 import fiveguys.webide.common.dto.ResponseDto;
+import fiveguys.webide.config.auth.LoginUser;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @RestController
 @RequiredArgsConstructor
@@ -36,5 +41,15 @@ public class ProjectController {
     public ResponseDto<Void> folderDelete(@PathVariable String path){
         projectService.fileFolderDelete(path);
         return ResponseDto.success("폴더 삭제 성공", null);
+    }
+
+    @PostMapping
+    public ResponseDto<Void> createRepo(
+            @AuthenticationPrincipal LoginUser loginUser,
+            @RequestPart("repoName") String repoName,
+            @RequestPart("file") MultipartFile file) throws IOException {
+        projectService.createRepo(loginUser, repoName, file);
+
+        return ResponseDto.success("레포 생성 성공", null);
     }
 }

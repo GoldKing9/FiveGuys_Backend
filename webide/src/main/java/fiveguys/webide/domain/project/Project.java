@@ -18,12 +18,14 @@ public class Project extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Long userId;
+    private String repoName;
     private String projectName;
     private boolean bookmark;
 
     @Builder
-    public Project(Long userId, String projectName, boolean bookmark) {
+    public Project(Long userId, String repoName, String projectName, boolean bookmark) {
         this.userId = userId;
+        this.repoName = repoName;
         this.projectName = projectName;
         this.bookmark = bookmark;
     }

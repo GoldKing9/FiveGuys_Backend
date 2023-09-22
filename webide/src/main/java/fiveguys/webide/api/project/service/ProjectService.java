@@ -3,24 +3,27 @@ package fiveguys.webide.api.project.service;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
+import com.amazonaws.services.s3.model.*;
 import fiveguys.webide.api.project.dto.request.FileCreateRequest;
-import fiveguys.webide.api.project.dto.request.FileRenameRequest;
+//import fiveguys.webide.api.project.dto.request.FileRenameRequest;
 import fiveguys.webide.api.project.dto.request.FolderCreateRequest;
 import fiveguys.webide.api.project.dto.response.FileReadResponse;
 import fiveguys.webide.common.dto.ResponseDto;
+import fiveguys.webide.config.auth.LoginUser;
+import fiveguys.webide.domain.project.Project;
 import fiveguys.webide.repository.project.ProjectRepository;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import net.lingala.zip4j.ZipFile;
+import net.lingala.zip4j.model.FileHeader;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.nio.charset.Charset;
+import java.util.List;
 
 
 @Service
@@ -29,6 +32,13 @@ import java.io.InputStreamReader;
 public class ProjectService {
     private final AmazonS3Client amazonS3Client;
     private final ProjectRepository projectRepository;
+//    private String localLocation = "C:/Users/pndlm/Desktop/WebIDE/FiveGuys_Backend/webide/src/main/resources/tempStore/";
+    private String localLocation = "/src/main/resources/tempStore/";
+
+    @PostConstruct
+    public void init() {
+        localLocation = System.getProperty("user.dir") + localLocation;
+    }
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
@@ -94,4 +104,62 @@ public class ProjectService {
         }
     }
 
+    @Transactional
+    public void createRepo(LoginUser loginUser, String repoName, MultipartFile file) throws IOException {
+        String nickname = loginUser.getUser().getNickname();
+
+        String uploadFileName = file.getOriginalFilename();
+        String projectName = uploadFileName.substring(0, uploadFileName.lastIndexOf("."));
+        System.out.println("projectName = " + projectName);
+
+        String uploadFullPath = localLocation + uploadFileName;
+        File localUploadFile = new File(uploadFullPath);
+        file.transferTo(localUploadFile);
+
+        ZipFile zipFile = new ZipFile(uploadFullPath);
+        String unzipPath = localLocation;
+        zipFile.setCharset(Charset.forName("UTF-8"));
+        zipFile.extractAll(unzipPath);
+
+        List<FileHeader> fileHeaders = zipFile.getFileHeaders();
+        for (FileHeader fileHeader : fileHeaders) {
+            if (fileHeader.isDirectory()) {
+                ObjectMetadata metadata = new ObjectMetadata();
+                byte[] content = new byte[0];
+                metadata.setContentLength(0);
+
+                amazonS3Client.putObject(bucket,nickname + "/" + fileHeader.getFileName(),new ByteArrayInputStream(content),metadata);
+            } else {
+                File localUnzipFile = new File(unzipPath + fileHeader.getFileName());
+
+                amazonS3Client.putObject(new PutObjectRequest(bucket, nickname + "/" + fileHeader.getFileName(), localUnzipFile)
+                        .withCannedAcl(CannedAccessControlList.PublicRead));
+            }
+        }
+
+        deleteDirectory(new File(localLocation + projectName));
+        localUploadFile.delete();
+
+        projectRepository.save(Project.builder()
+                                .userId(loginUser.getUser().getId())
+                                .repoName(repoName)
+                                .projectName(projectName)
+                                .bookmark(false)
+                                .build());
+    }
+    public static boolean deleteDirectory(File dir) {
+        if (dir.isDirectory()) {
+            File[] children = dir.listFiles();
+            if (children != null) {
+                for (File child : children) {
+                    boolean success = deleteDirectory(child);
+                    if (!success) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return dir.delete();
+    }
 }
