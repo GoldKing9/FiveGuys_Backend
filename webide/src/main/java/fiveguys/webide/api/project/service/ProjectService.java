@@ -58,4 +58,40 @@ public class ProjectService {
         }
     }
 
+    public FileReadResponse fileRead(String path) {
+        try {
+            S3Object s3Object = amazonS3Client.getObject(bucket, path);
+            S3ObjectInputStream objectInputStream = s3Object.getObjectContent();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(objectInputStream));
+            StringBuilder content = new StringBuilder();
+            String line;
+            int lines = 1;
+            while ((line = reader.readLine()) != null) {
+                content.append(line).append("\n");
+                lines += 1;
+            }
+            reader.close();
+            return FileReadResponse.builder()
+                    .body(content.toString())
+                    .lines(lines)
+                    .size(248)
+                    .build();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return FileReadResponse.builder().build();
+        }
+    }
+
+    public void fileFolderDelete(String path) {
+        try {
+            amazonS3Client.deleteObject(bucket, path);
+        } catch (AmazonServiceException e) {
+            // AmazonS3 서비스 예외 처리
+            e.printStackTrace();
+        } catch (AmazonClientException e) {
+            // AmazonS3 클라이언트 예외 처리
+            e.printStackTrace();
+        }
+    }
+
 }

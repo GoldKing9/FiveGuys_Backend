@@ -23,5 +23,18 @@ public class ProjectController {
         projectService.folderCreate(folderCreateRequest);
         return ResponseDto.success("폴더 생성 성공",null);
     }
-
+    @GetMapping("/file/tree/{*path}")
+    public ResponseDto<FileReadResponse> fileRead(@PathVariable String path){
+        return ResponseDto.success("파일 보기 성공",projectService.fileRead(path));
+    }
+    @DeleteMapping("/file/tree/{*path}")
+    public ResponseDto<Void> fileDelete(@PathVariable String path){
+        projectService.fileFolderDelete(path);
+        return ResponseDto.success("파일 삭제 성공",null);
+    }
+    @DeleteMapping("/folder/tree/{*path}")
+    public ResponseDto<Void> folderDelete(@PathVariable String path){
+        projectService.fileFolderDelete(path);
+        return ResponseDto.success("폴더 삭제 성공", null);
+    }
 }
