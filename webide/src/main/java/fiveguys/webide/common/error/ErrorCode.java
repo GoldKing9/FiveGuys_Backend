@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 @Getter
 public enum ErrorCode {
     USERNAME_NOT_FOUND(HttpStatus.UNAUTHORIZED,"USERNAME_NOT_FOUND", "계정이 존재하지 않습니다."),
+    NOT_EXIST_DICTATION(HttpStatus.BAD_REQUEST,"NOT_EXIST_DICTATION", "저장된 받아쓰기가 없습니다."),
     EXIST_EMAIL(HttpStatus.BAD_REQUEST, "EXIST_EMAIL", "존재하는 이메일 입니다."),
     EXIST_NICKNAME(HttpStatus.BAD_REQUEST, "EXIST_NICKNAME", "존재하는 닉네임 입니다."),
     BAD_CREDENTIALS(HttpStatus.UNAUTHORIZED, "BAD_CREDENTIALS","비밀번호가 불일치 합니다."),
