@@ -18,4 +18,9 @@ public class Invite {
 
     private Long userId;
     private Long projectId;
+
+    public Invite(Long userId, Long projectId) {
+        this.userId = userId;
+        this.projectId = projectId;
+    }
 }
