@@ -8,22 +8,26 @@ import fiveguys.webide.api.project.dto.request.FileCreateRequest;
 //import fiveguys.webide.api.project.dto.request.FileRenameRequest;
 import fiveguys.webide.api.project.dto.request.FolderCreateRequest;
 import fiveguys.webide.api.project.dto.response.FileReadResponse;
+import fiveguys.webide.api.project.dto.response.FileTreeResponse;
 import fiveguys.webide.common.dto.ResponseDto;
 import fiveguys.webide.config.auth.LoginUser;
 import fiveguys.webide.domain.project.Project;
 import fiveguys.webide.repository.project.ProjectRepository;
 import jakarta.annotation.PostConstruct;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.model.FileHeader;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.swing.*;
 import java.io.*;
 import java.nio.charset.Charset;
-import java.util.List;
+import java.util.*;
 
 
 @Service
@@ -32,7 +36,6 @@ import java.util.List;
 public class ProjectService {
     private final AmazonS3Client amazonS3Client;
     private final ProjectRepository projectRepository;
-//    private String localLocation = "C:/Users/pndlm/Desktop/WebIDE/FiveGuys_Backend/webide/src/main/resources/tempStore/";
     private String localLocation = "/src/main/resources/tempStore/";
 
     @PostConstruct
@@ -123,6 +126,7 @@ public class ProjectService {
 
         List<FileHeader> fileHeaders = zipFile.getFileHeaders();
         for (FileHeader fileHeader : fileHeaders) {
+            System.out.println(fileHeader.getFileName());
             if (fileHeader.isDirectory()) {
                 ObjectMetadata metadata = new ObjectMetadata();
                 byte[] content = new byte[0];
@@ -162,4 +166,22 @@ public class ProjectService {
 
         return dir.delete();
     }
+
+    public FileTreeResponse fileTree(String nickname, String projectName) {
+        ObjectListing objectListing = amazonS3Client.listObjects(bucket, nickname + "/" + projectName);
+        List<S3ObjectSummary> s3ObjectSummaries = objectListing.getObjectSummaries();
+
+        FileTreeResponse data = new FileTreeResponse(projectName, "folder");
+        for(S3ObjectSummary s3object : s3ObjectSummaries){
+            String fileKey = s3object.getKey();
+            String fileName = fileKey.replace(nickname + "/" + projectName + "/", "");
+
+            String[] fileParts = fileName.split("/");
+            data.insert(fileParts, 0);
+        }
+
+        return data;
+    }
+
+
 }

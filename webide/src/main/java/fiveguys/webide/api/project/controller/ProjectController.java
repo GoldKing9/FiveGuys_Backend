@@ -3,6 +3,7 @@ package fiveguys.webide.api.project.controller;
 import fiveguys.webide.api.project.dto.request.FileCreateRequest;
 import fiveguys.webide.api.project.dto.request.FolderCreateRequest;
 import fiveguys.webide.api.project.dto.response.FileReadResponse;
+import fiveguys.webide.api.project.dto.response.FileTreeResponse;
 import fiveguys.webide.api.project.service.ProjectService;
 import fiveguys.webide.common.dto.ResponseDto;
 import fiveguys.webide.config.auth.LoginUser;
@@ -51,5 +52,12 @@ public class ProjectController {
         projectService.createRepo(loginUser, repoName, file);
 
         return ResponseDto.success("레포 생성 성공", null);
+    }
+
+    @GetMapping("/{nickname}/{projectName}")
+    public ResponseDto<FileTreeResponse> fileTree(@PathVariable String nickname,
+                                                  @PathVariable String projectName) {
+
+        return ResponseDto.success("파일 트리 보기 성공", projectService.fileTree(nickname, projectName));
     }
 }
