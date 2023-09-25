@@ -60,4 +60,14 @@ public class ProjectController {
 
         return ResponseDto.success("파일 트리 보기 성공", projectService.fileTree(nickname, projectName));
     }
+
+    @DeleteMapping("/{repoId}")
+    public ResponseDto<Void> deleteRepo(
+            @AuthenticationPrincipal LoginUser loginUser,
+            @PathVariable Long repoId) {
+        
+        projectService.deleteRepo(loginUser.getUser().getNickname(), repoId);
+
+        return ResponseDto.success("레포 삭제 성공", null);
+    }
 }

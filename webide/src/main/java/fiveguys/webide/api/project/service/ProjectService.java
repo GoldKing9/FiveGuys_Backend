@@ -10,8 +10,12 @@ import fiveguys.webide.api.project.dto.request.FolderCreateRequest;
 import fiveguys.webide.api.project.dto.response.FileReadResponse;
 import fiveguys.webide.api.project.dto.response.FileTreeResponse;
 import fiveguys.webide.common.dto.ResponseDto;
+import fiveguys.webide.common.error.ErrorCode;
+import fiveguys.webide.common.error.GlobalException;
 import fiveguys.webide.config.auth.LoginUser;
+import fiveguys.webide.domain.invite.Invite;
 import fiveguys.webide.domain.project.Project;
+import fiveguys.webide.repository.invite.InviteRepository;
 import fiveguys.webide.repository.project.ProjectRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
@@ -36,6 +40,7 @@ import java.util.*;
 public class ProjectService {
     private final AmazonS3Client amazonS3Client;
     private final ProjectRepository projectRepository;
+    private final InviteRepository inviteRepository;
     private String localLocation = "/src/main/resources/tempStore/";
 
     @PostConstruct
@@ -184,4 +189,23 @@ public class ProjectService {
     }
 
 
+    @Transactional
+    public void deleteRepo(String nickname, Long repoId) {
+        Project findProject = projectRepository.findById(repoId)
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_EXIST_PROJECT));
+
+        String projectName = findProject.getProjectName();
+        ObjectListing objectListing = amazonS3Client.listObjects(bucket, nickname + "/" + projectName);
+        List<S3ObjectSummary> s3ObjectSummaries = objectListing.getObjectSummaries();
+
+        for(S3ObjectSummary s3object : s3ObjectSummaries){
+            String fileKey = s3object.getKey();
+            amazonS3Client.deleteObject(bucket, fileKey);
+        }
+
+        projectRepository.delete(findProject);
+
+        List<Invite> findInvites = inviteRepository.findAllByProjectId(repoId);
+        inviteRepository.deleteAllInBatch(findInvites);
+    }
 }
