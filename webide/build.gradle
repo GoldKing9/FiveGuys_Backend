@@ -54,6 +54,9 @@ dependencies {
 
     //S3
     implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+
+    // zip4j
+    implementation group: 'net.lingala.zip4j', name: 'zip4j', version: '2.9.0'
 }
 
 tasks.named('test') {
