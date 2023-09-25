@@ -208,4 +208,12 @@ public class ProjectService {
         List<Invite> findInvites = inviteRepository.findAllByProjectId(repoId);
         inviteRepository.deleteAllInBatch(findInvites);
     }
+
+    @Transactional
+    public void changeRepoName(Long repoId, String repoName) {
+        Project findProject = projectRepository.findById(repoId)
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_EXIST_PROJECT));
+
+        findProject.changeRepoName(repoName);
+    }
 }

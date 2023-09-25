@@ -1,5 +1,6 @@
 package fiveguys.webide.api.project.controller;
 
+import fiveguys.webide.api.project.dto.request.ChangeRepoNameRequest;
 import fiveguys.webide.api.project.dto.request.FileCreateRequest;
 import fiveguys.webide.api.project.dto.request.FolderCreateRequest;
 import fiveguys.webide.api.project.dto.response.FileReadResponse;
@@ -45,10 +46,9 @@ public class ProjectController {
     }
 
     @PostMapping
-    public ResponseDto<Void> createRepo(
-            @AuthenticationPrincipal LoginUser loginUser,
-            @RequestPart("repoName") String repoName,
-            @RequestPart("file") MultipartFile file) throws IOException {
+    public ResponseDto<Void> createRepo(@AuthenticationPrincipal LoginUser loginUser,
+                                        @RequestPart("repoName") String repoName,
+                                        @RequestPart("file") MultipartFile file) throws IOException {
         projectService.createRepo(loginUser, repoName, file);
 
         return ResponseDto.success("레포 생성 성공", null);
@@ -62,12 +62,21 @@ public class ProjectController {
     }
 
     @DeleteMapping("/{repoId}")
-    public ResponseDto<Void> deleteRepo(
-            @AuthenticationPrincipal LoginUser loginUser,
-            @PathVariable Long repoId) {
-        
+    public ResponseDto<Void> deleteRepo(@AuthenticationPrincipal LoginUser loginUser,
+                                        @PathVariable Long repoId) {
+
         projectService.deleteRepo(loginUser.getUser().getNickname(), repoId);
 
         return ResponseDto.success("레포 삭제 성공", null);
+    }
+
+    @PutMapping("/{repoId}")
+    public ResponseDto<Void> changeRepoName(@AuthenticationPrincipal LoginUser loginUser,
+                                            @PathVariable Long repoId,
+                                            @RequestBody ChangeRepoNameRequest changeRepoNameRequest) {
+
+        projectService.changeRepoName(repoId, changeRepoNameRequest.getRepoName());
+
+        return ResponseDto.success("레포 이름 수정 성공", null);
     }
 }
