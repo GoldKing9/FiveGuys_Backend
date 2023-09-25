@@ -5,6 +5,7 @@ import fiveguys.webide.api.project.dto.request.FileCreateRequest;
 import fiveguys.webide.api.project.dto.request.FolderCreateRequest;
 import fiveguys.webide.api.project.dto.response.FileReadResponse;
 import fiveguys.webide.api.project.dto.response.FileTreeResponse;
+import fiveguys.webide.api.project.dto.response.MyRepoListResponse;
 import fiveguys.webide.api.project.service.ProjectService;
 import fiveguys.webide.common.dto.ResponseDto;
 import fiveguys.webide.config.auth.LoginUser;
@@ -71,12 +72,17 @@ public class ProjectController {
     }
 
     @PutMapping("/{repoId}")
-    public ResponseDto<Void> changeRepoName(@AuthenticationPrincipal LoginUser loginUser,
-                                            @PathVariable Long repoId,
+    public ResponseDto<Void> changeRepoName(@PathVariable Long repoId,
                                             @RequestBody ChangeRepoNameRequest changeRepoNameRequest) {
 
         projectService.changeRepoName(repoId, changeRepoNameRequest.getRepoName());
 
         return ResponseDto.success("레포 이름 수정 성공", null);
+    }
+
+    @GetMapping("/my")
+    public ResponseDto<MyRepoListResponse> myRepoList(@AuthenticationPrincipal LoginUser loginUser) {
+
+        return ResponseDto.success("내가 만든 레포 보기 성공", projectService.myRepoList(loginUser.getUser().getId()));
     }
 }

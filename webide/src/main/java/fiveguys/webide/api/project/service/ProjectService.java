@@ -4,20 +4,22 @@ import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.*;
+import com.querydsl.core.QueryResults;
 import fiveguys.webide.api.project.dto.request.FileCreateRequest;
 //import fiveguys.webide.api.project.dto.request.FileRenameRequest;
 import fiveguys.webide.api.project.dto.request.FolderCreateRequest;
-import fiveguys.webide.api.project.dto.response.FileReadResponse;
-import fiveguys.webide.api.project.dto.response.FileTreeResponse;
+import fiveguys.webide.api.project.dto.response.*;
 import fiveguys.webide.common.dto.ResponseDto;
 import fiveguys.webide.common.error.ErrorCode;
 import fiveguys.webide.common.error.GlobalException;
 import fiveguys.webide.config.auth.LoginUser;
 import fiveguys.webide.domain.invite.Invite;
 import fiveguys.webide.domain.project.Project;
+import fiveguys.webide.domain.user.User;
 import fiveguys.webide.repository.invite.InviteRepository;
 import fiveguys.webide.repository.project.ProjectRepository;
 import jakarta.annotation.PostConstruct;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.lingala.zip4j.ZipFile;
@@ -31,6 +33,8 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.swing.*;
 import java.io.*;
 import java.nio.charset.Charset;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 
@@ -215,5 +219,28 @@ public class ProjectService {
                 .orElseThrow(() -> new GlobalException(ErrorCode.NOT_EXIST_PROJECT));
 
         findProject.changeRepoName(repoName);
+    }
+
+    public MyRepoListResponse myRepoList(Long userId) {
+        List<Project> findProjectList = projectRepository.findAllByUserId(userId);
+        long repoCnt = findProjectList.stream().count();
+
+        MyRepoListResponse data = new MyRepoListResponse();
+        for (Project findProject : findProjectList) {
+            List<InvitedUser> findIvitedUserList = inviteRepository.findInviteListByProjectId(findProject.getId());
+
+            data.getRepoList().add(RepoInfo.builder()
+                    .repoId(findProject.getId())
+                    .repoName(findProject.getRepoName())
+                    .createdAt(findProject.getCreatedAt())
+                    .updatedAt(findProject.getModifiedAt())
+                    .bookmark(findProject.isBookmark())
+                    .invitedUser(findIvitedUserList)
+                    .invitedUserCnt(findIvitedUserList.stream().count())
+                    .build());
+        }
+        data.setRepoCnt(repoCnt);
+
+        return data;
     }
 }
