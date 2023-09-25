@@ -45,12 +45,12 @@ public class ProjectController {
     }
 
     @PostMapping
-    public ResponseDto<Void> createRepo(@AuthenticationPrincipal LoginUser loginUser,
+    public ResponseDto<CreateRepoResponse> createRepo(@AuthenticationPrincipal LoginUser loginUser,
                                         @RequestPart("repoName") String repoName,
                                         @RequestPart("file") MultipartFile file) throws IOException {
-        projectService.createRepo(loginUser, repoName, file);
 
-        return ResponseDto.success("레포 생성 성공", null);
+
+        return ResponseDto.success("레포 생성 성공", projectService.createRepo(loginUser, repoName, file));
     }
 
     @GetMapping("/{nickname}/{projectName}")

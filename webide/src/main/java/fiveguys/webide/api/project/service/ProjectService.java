@@ -108,7 +108,7 @@ public class ProjectService {
     }
 
     @Transactional
-    public void createRepo(LoginUser loginUser, String repoName, MultipartFile file) throws IOException {
+    public CreateRepoResponse createRepo(LoginUser loginUser, String repoName, MultipartFile file) throws IOException {
         String nickname = loginUser.getUser().getNickname();
 
         String uploadFileName = file.getOriginalFilename();
@@ -144,12 +144,14 @@ public class ProjectService {
         deleteDirectory(new File(localLocation + projectName));
         localUploadFile.delete();
 
-        projectRepository.save(Project.builder()
-                                .userId(loginUser.getUser().getId())
-                                .repoName(repoName)
-                                .projectName(projectName)
-                                .bookmark(false)
-                                .build());
+        Project saveProject = projectRepository.save(Project.builder()
+                .userId(loginUser.getUser().getId())
+                .repoName(repoName)
+                .projectName(projectName)
+                .bookmark(false)
+                .build());
+
+        return new CreateRepoResponse(saveProject.getId(), projectName);
     }
     public static boolean deleteDirectory(File dir) {
         if (dir.isDirectory()) {
