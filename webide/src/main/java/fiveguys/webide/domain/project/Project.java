@@ -33,4 +33,7 @@ public class Project extends BaseTimeEntity {
     public void changeRepoName(String repoName) {
         this.repoName = repoName;
     }
+    public void changeBookmark() {
+        this.bookmark = !this.isBookmark();
+    }
 }

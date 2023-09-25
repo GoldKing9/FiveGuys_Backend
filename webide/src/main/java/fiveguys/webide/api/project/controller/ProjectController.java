@@ -3,14 +3,10 @@ package fiveguys.webide.api.project.controller;
 import fiveguys.webide.api.project.dto.request.ChangeRepoNameRequest;
 import fiveguys.webide.api.project.dto.request.FileCreateRequest;
 import fiveguys.webide.api.project.dto.request.FolderCreateRequest;
-import fiveguys.webide.api.project.dto.response.FileReadResponse;
-import fiveguys.webide.api.project.dto.response.FileTreeResponse;
-import fiveguys.webide.api.project.dto.response.InvitedRepoList;
-import fiveguys.webide.api.project.dto.response.MyRepoListResponse;
+import fiveguys.webide.api.project.dto.response.*;
 import fiveguys.webide.api.project.service.ProjectService;
 import fiveguys.webide.common.dto.ResponseDto;
 import fiveguys.webide.config.auth.LoginUser;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -89,8 +85,16 @@ public class ProjectController {
     }
 
     @GetMapping("/invited")
-    public ResponseDto<InvitedRepoList> invitedRepoList(@AuthenticationPrincipal LoginUser loginUser) {
+    public ResponseDto<InvitedRepoListResponse> invitedRepoList(@AuthenticationPrincipal LoginUser loginUser) {
 
         return ResponseDto.success("초대된 레포 보기 성공", projectService.invitedRepoList(loginUser.getUser().getId()));
+    }
+
+    @PostMapping("/{repoId}/bookmark")
+    public ResponseDto<Void> bookmarkRepo(@PathVariable Long repoId) {
+
+        projectService.bookmarkRepo(repoId);
+
+        return ResponseDto.success("즐겨찾기 성공", null);
     }
 }

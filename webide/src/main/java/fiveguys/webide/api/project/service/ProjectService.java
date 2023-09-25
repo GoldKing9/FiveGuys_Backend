@@ -4,37 +4,28 @@ import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.*;
-import com.querydsl.core.QueryResults;
 import fiveguys.webide.api.project.dto.request.FileCreateRequest;
 //import fiveguys.webide.api.project.dto.request.FileRenameRequest;
 import fiveguys.webide.api.project.dto.request.FolderCreateRequest;
 import fiveguys.webide.api.project.dto.response.*;
-import fiveguys.webide.common.dto.ResponseDto;
 import fiveguys.webide.common.error.ErrorCode;
 import fiveguys.webide.common.error.GlobalException;
 import fiveguys.webide.config.auth.LoginUser;
 import fiveguys.webide.domain.invite.Invite;
 import fiveguys.webide.domain.project.Project;
-import fiveguys.webide.domain.user.User;
 import fiveguys.webide.repository.invite.InviteRepository;
 import fiveguys.webide.repository.project.ProjectRepository;
 import jakarta.annotation.PostConstruct;
-import lombok.Builder;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.model.FileHeader;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.swing.*;
 import java.io.*;
 import java.nio.charset.Charset;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 
 
@@ -244,14 +235,21 @@ public class ProjectService {
         return data;
     }
 
-    public InvitedRepoList invitedRepoList(Long userId) {
-        InvitedRepoList data = new InvitedRepoList();
+    public InvitedRepoListResponse invitedRepoList(Long userId) {
+        InvitedRepoListResponse data = new InvitedRepoListResponse();
 
-        List<InvitedRepoInfo> projectListByUserId = inviteRepository.findProjectListByUserId(3L);
+        List<InvitedRepoInfo> projectListByUserId = inviteRepository.findProjectListByUserId(userId);
         data.setRepoList(projectListByUserId);
 
         data.setRepoCnt(projectListByUserId.stream().count());
 
         return data;
+    }
+
+
+    @Transactional
+    public void bookmarkRepo(Long repoId) {
+        Project findProject = projectRepository.findById(repoId).get();
+        findProject.changeBookmark();
     }
 }
