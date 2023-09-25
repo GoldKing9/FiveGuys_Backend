@@ -1,13 +1,12 @@
 package fiveguys.webide.repository.invite;
 
-import com.querydsl.core.QueryResults;
 import com.querydsl.core.types.Projections;
-import com.querydsl.jpa.impl.JPAQuery;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import fiveguys.webide.api.invite.dto.response.UserInfoDto;
+import fiveguys.webide.api.project.dto.response.InvitedRepoInfo;
 import fiveguys.webide.api.project.dto.response.InvitedUser;
-import fiveguys.webide.api.project.service.ProjectService;
-import fiveguys.webide.domain.invite.QInvite;
+import fiveguys.webide.domain.project.QProject;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -15,10 +14,11 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 import static fiveguys.webide.domain.invite.QInvite.invite;
+import static fiveguys.webide.domain.project.QProject.project;
 import static fiveguys.webide.domain.user.QUser.user;
 
 @RequiredArgsConstructor
-public class InviteRepositoryImpl implements InviteRepositoryCustom{
+public class InviteRepositoryImpl implements InviteRepositoryCustom {
     private final JPAQueryFactory jpaQueryFactory;
 
     @Override
@@ -50,5 +50,17 @@ public class InviteRepositoryImpl implements InviteRepositoryCustom{
                 .fetch();
 
         return findInvitedUser;
+    }
+
+    @Override
+    public List<InvitedRepoInfo> findProjectListByUserId(Long userId) {
+
+        List<InvitedRepoInfo> findInvitedRepoInfoList = jpaQueryFactory.select(Projections.constructor(InvitedRepoInfo.class,
+                        project.id, project.repoName, project.createdAt, project.modifiedAt, project.bookmark, user.nickname))
+                .from(invite, project, user)
+                .where(invite.userId.eq(userId), invite.projectId.eq(project.id), user.id.eq(project.userId))
+                .fetch();
+
+        return findInvitedRepoInfoList;
     }
 }

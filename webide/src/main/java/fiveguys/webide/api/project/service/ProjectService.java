@@ -243,4 +243,15 @@ public class ProjectService {
 
         return data;
     }
+
+    public InvitedRepoList invitedRepoList(Long userId) {
+        InvitedRepoList data = new InvitedRepoList();
+
+        List<InvitedRepoInfo> projectListByUserId = inviteRepository.findProjectListByUserId(3L);
+        data.setRepoList(projectListByUserId);
+
+        data.setRepoCnt(projectListByUserId.stream().count());
+
+        return data;
+    }
 }
