@@ -1,5 +1,7 @@
 package fiveguys.webide.api.project.controller;
 
+import fiveguys.webide.api.project.dto.request.*;
+import fiveguys.webide.api.project.dto.response.FileReadResponse;
 import fiveguys.webide.api.project.dto.request.ChangeRepoNameRequest;
 import fiveguys.webide.api.project.dto.request.FileCreateRequest;
 import fiveguys.webide.api.project.dto.request.FolderCreateRequest;
@@ -43,6 +45,21 @@ public class ProjectController {
         projectService.fileFolderDelete(path);
         return ResponseDto.success("폴더 삭제 성공", null);
     }
+  
+    @PutMapping("/refile/tree/{*path}")
+    public ResponseDto<Void> fileRename(@RequestBody FileRenameRequest fileRenameRequest, @PathVariable String path){
+        projectService.fileRename(fileRenameRequest, path);
+        return ResponseDto.success("파일명 수정 성공",null);
+    }
+    @PutMapping("/folder/tree/{*path}")
+    public ResponseDto<Void> folderRename(@RequestBody FolderRenameRequest folderRenameRequest, @PathVariable String path){
+        projectService.folderRename(folderRenameRequest, path);
+        return ResponseDto.success("폴더명 수정 성공", null);
+    }
+    @PutMapping("/file/tree/{*path}")
+    public ResponseDto<Void> fileChangeBody(@RequestBody FileNewBodyRequest fileNewBodyRequest, @PathVariable String path){
+        projectService.fileChangeBody(fileNewBodyRequest, path);
+        return ResponseDto.success("폴더내용 수정 성공", null);
 
     @PostMapping
     public ResponseDto<CreateRepoResponse> createRepo(@AuthenticationPrincipal LoginUser loginUser,

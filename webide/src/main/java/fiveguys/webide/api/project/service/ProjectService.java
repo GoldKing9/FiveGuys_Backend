@@ -2,10 +2,13 @@ package fiveguys.webide.api.project.service;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
+import com.amazonaws.services.s3.AmazonS3Builder;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.*;
+import fiveguys.webide.api.project.dto.request.*;
+import fiveguys.webide.api.project.dto.response.FileReadResponse;
+import fiveguys.webide.common.dto.ResponseDto;
 import fiveguys.webide.api.project.dto.request.FileCreateRequest;
-//import fiveguys.webide.api.project.dto.request.FileRenameRequest;
 import fiveguys.webide.api.project.dto.request.FolderCreateRequest;
 import fiveguys.webide.api.project.dto.response.*;
 import fiveguys.webide.common.error.ErrorCode;
@@ -106,7 +109,55 @@ public class ProjectService {
             e.printStackTrace();
         }
     }
+    public void fileRename(FileRenameRequest fileRenameRequest, String path){
+        try {
+            // 기존 파일의 내용을 읽어옵니다.
+            S3Object s3Object = amazonS3Client.getObject(bucket, path);
+            S3ObjectInputStream objectInputStream = s3Object.getObjectContent();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(objectInputStream));
+            StringBuilder content = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                content.append(line).append("\n");
+            }
+            reader.close();
 
+            // 기존 파일을 삭제합니다.
+            amazonS3Client.deleteObject(bucket, path);
+
+            // 새로운 경로에 파일을 복사하여 저장합니다.
+            String newFileName = fileRenameRequest.getPath()+"/"+fileRenameRequest.getFileName();
+            ObjectMetadata metadata = new ObjectMetadata();
+            byte[] contentBytes = content.toString().getBytes(); // 파일 내용을 바이트 배열로 변환
+            metadata.setContentLength(contentBytes.length);
+            amazonS3Client.putObject(bucket, newFileName, new ByteArrayInputStream(contentBytes), metadata);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+    public void folderRename(FolderRenameRequest folderRenameRequest, String path){
+        ObjectListing objectListing = amazonS3Client.listObjects(bucket, path);
+        for(S3ObjectSummary objectSummary : objectListing.getObjectSummaries()){
+            String sourceObjectKey = objectSummary.getKey();
+            String destinationKey = sourceObjectKey.replace(path, folderRenameRequest.getPath()+"/"+folderRenameRequest.getFolderName());
+            CopyObjectRequest copyObjectRequest = new CopyObjectRequest(bucket, sourceObjectKey, bucket, destinationKey);
+            amazonS3Client.copyObject(copyObjectRequest);
+        }
+        ObjectListing sourceFolderObjects = amazonS3Client.listObjects(bucket, path);
+        for (S3ObjectSummary objectSummary : sourceFolderObjects.getObjectSummaries()) {
+            String objectKey = objectSummary.getKey();
+            amazonS3Client.deleteObject(bucket, objectKey);
+        }
+    }
+
+    public void fileChangeBody(FileNewBodyRequest fileNewBodyRequest,String path) {
+        byte[] newContentBytes = fileNewBodyRequest.getBody().getBytes();
+        amazonS3Client.deleteObject(bucket, path);
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentLength(newContentBytes.length);
+        amazonS3Client.putObject(bucket, path, new ByteArrayInputStream(newContentBytes), metadata);
+      
     @Transactional
     public CreateRepoResponse createRepo(LoginUser loginUser, String repoName, MultipartFile file) throws IOException {
         String nickname = loginUser.getUser().getNickname();
@@ -255,3 +306,4 @@ public class ProjectService {
         findProject.changeBookmark();
     }
 }
+
