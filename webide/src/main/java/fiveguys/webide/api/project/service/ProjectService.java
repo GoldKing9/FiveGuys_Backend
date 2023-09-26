@@ -2,14 +2,9 @@ package fiveguys.webide.api.project.service;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
-import com.amazonaws.services.s3.AmazonS3Builder;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.*;
 import fiveguys.webide.api.project.dto.request.*;
-import fiveguys.webide.api.project.dto.response.FileReadResponse;
-import fiveguys.webide.common.dto.ResponseDto;
-import fiveguys.webide.api.project.dto.request.FileCreateRequest;
-import fiveguys.webide.api.project.dto.request.FolderCreateRequest;
 import fiveguys.webide.api.project.dto.response.*;
 import fiveguys.webide.common.error.ErrorCode;
 import fiveguys.webide.common.error.GlobalException;
@@ -29,7 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.List;
 
 
 @Service
@@ -157,6 +152,7 @@ public class ProjectService {
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentLength(newContentBytes.length);
         amazonS3Client.putObject(bucket, path, new ByteArrayInputStream(newContentBytes), metadata);
+    }
       
     @Transactional
     public CreateRepoResponse createRepo(LoginUser loginUser, String repoName, MultipartFile file) throws IOException {
