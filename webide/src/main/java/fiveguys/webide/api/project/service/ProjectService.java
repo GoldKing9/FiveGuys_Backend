@@ -7,24 +7,23 @@ import com.amazonaws.services.s3.model.*;
 import fiveguys.webide.api.project.dto.request.FileCreateRequest;
 //import fiveguys.webide.api.project.dto.request.FileRenameRequest;
 import fiveguys.webide.api.project.dto.request.FolderCreateRequest;
-import fiveguys.webide.api.project.dto.response.FileReadResponse;
-import fiveguys.webide.api.project.dto.response.FileTreeResponse;
-import fiveguys.webide.common.dto.ResponseDto;
+import fiveguys.webide.api.project.dto.response.*;
+import fiveguys.webide.common.error.ErrorCode;
+import fiveguys.webide.common.error.GlobalException;
 import fiveguys.webide.config.auth.LoginUser;
+import fiveguys.webide.domain.invite.Invite;
 import fiveguys.webide.domain.project.Project;
+import fiveguys.webide.repository.invite.InviteRepository;
 import fiveguys.webide.repository.project.ProjectRepository;
 import jakarta.annotation.PostConstruct;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.model.FileHeader;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.swing.*;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -36,6 +35,7 @@ import java.util.*;
 public class ProjectService {
     private final AmazonS3Client amazonS3Client;
     private final ProjectRepository projectRepository;
+    private final InviteRepository inviteRepository;
     private String localLocation = "/src/main/resources/tempStore/";
 
     @PostConstruct
@@ -108,7 +108,7 @@ public class ProjectService {
     }
 
     @Transactional
-    public void createRepo(LoginUser loginUser, String repoName, MultipartFile file) throws IOException {
+    public CreateRepoResponse createRepo(LoginUser loginUser, String repoName, MultipartFile file) throws IOException {
         String nickname = loginUser.getUser().getNickname();
 
         String uploadFileName = file.getOriginalFilename();
@@ -144,12 +144,14 @@ public class ProjectService {
         deleteDirectory(new File(localLocation + projectName));
         localUploadFile.delete();
 
-        projectRepository.save(Project.builder()
-                                .userId(loginUser.getUser().getId())
-                                .repoName(repoName)
-                                .projectName(projectName)
-                                .bookmark(false)
-                                .build());
+        Project saveProject = projectRepository.save(Project.builder()
+                .userId(loginUser.getUser().getId())
+                .repoName(repoName)
+                .projectName(projectName)
+                .bookmark(false)
+                .build());
+
+        return new CreateRepoResponse(saveProject.getId(), projectName);
     }
     public static boolean deleteDirectory(File dir) {
         if (dir.isDirectory()) {
@@ -184,4 +186,72 @@ public class ProjectService {
     }
 
 
+    @Transactional
+    public void deleteRepo(String nickname, Long repoId) {
+        Project findProject = projectRepository.findById(repoId)
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_EXIST_PROJECT));
+
+        String projectName = findProject.getProjectName();
+        ObjectListing objectListing = amazonS3Client.listObjects(bucket, nickname + "/" + projectName);
+        List<S3ObjectSummary> s3ObjectSummaries = objectListing.getObjectSummaries();
+
+        for(S3ObjectSummary s3object : s3ObjectSummaries){
+            String fileKey = s3object.getKey();
+            amazonS3Client.deleteObject(bucket, fileKey);
+        }
+
+        projectRepository.delete(findProject);
+
+        List<Invite> findInvites = inviteRepository.findAllByProjectId(repoId);
+        inviteRepository.deleteAllInBatch(findInvites);
+    }
+
+    @Transactional
+    public void changeRepoName(Long repoId, String repoName) {
+        Project findProject = projectRepository.findById(repoId)
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_EXIST_PROJECT));
+
+        findProject.changeRepoName(repoName);
+    }
+
+    public MyRepoListResponse myRepoList(Long userId) {
+        List<Project> findProjectList = projectRepository.findAllByUserId(userId);
+        long repoCnt = findProjectList.stream().count();
+
+        MyRepoListResponse data = new MyRepoListResponse();
+        for (Project findProject : findProjectList) {
+            List<InvitedUser> findIvitedUserList = inviteRepository.findInviteListByProjectId(findProject.getId());
+
+            data.getRepoList().add(RepoInfo.builder()
+                    .repoId(findProject.getId())
+                    .repoName(findProject.getRepoName())
+                    .createdAt(findProject.getCreatedAt())
+                    .updatedAt(findProject.getModifiedAt())
+                    .bookmark(findProject.isBookmark())
+                    .invitedUser(findIvitedUserList)
+                    .invitedUserCnt(findIvitedUserList.stream().count())
+                    .build());
+        }
+        data.setRepoCnt(repoCnt);
+
+        return data;
+    }
+
+    public InvitedRepoListResponse invitedRepoList(Long userId) {
+        InvitedRepoListResponse data = new InvitedRepoListResponse();
+
+        List<InvitedRepoInfo> projectListByUserId = inviteRepository.findProjectListByUserId(userId);
+        data.setRepoList(projectListByUserId);
+
+        data.setRepoCnt(projectListByUserId.stream().count());
+
+        return data;
+    }
+
+
+    @Transactional
+    public void bookmarkRepo(Long repoId) {
+        Project findProject = projectRepository.findById(repoId).get();
+        findProject.changeBookmark();
+    }
 }

@@ -16,6 +16,7 @@ public enum ErrorCode {
     EXPIRED_ACCESS_TOKEN(HttpStatus.UNAUTHORIZED, "Token Expired","JWT 토큰이 만료되었습니다."),
     UNSUPPORTED_JWT_TOKEN(HttpStatus.UNAUTHORIZED,"UNSUPPORTED_JWT_TOKEN", "지원하지 않는 토큰입니다."),
     EXPIRED_REFRESH_TOKEN(HttpStatus.BAD_REQUEST, "EXPIRED_REFRESH_TOKEN","리프레시 토큰시간이 만료되었습니다. 다시 로그인 해주세요."),
+    NOT_EXIST_PROJECT(HttpStatus.BAD_REQUEST, "NOT_EXIST_PROJECT", "저장된 프로젝트가 없습니다.")
     ;
 
     private HttpStatus httpStatus;
