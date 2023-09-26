@@ -34,11 +34,11 @@ public class ProjectService {
     private final AmazonS3Client amazonS3Client;
     private final ProjectRepository projectRepository;
     private final InviteRepository inviteRepository;
-    private String localLocation = "/src/main/resources/tempStore/";
+    private String localLocation;
 
     @PostConstruct
     public void init() {
-        localLocation = System.getProperty("user.dir") + localLocation;
+        localLocation = System.getProperty("user.dir") + "/";
     }
 
     @Value("${cloud.aws.s3.bucket}")
