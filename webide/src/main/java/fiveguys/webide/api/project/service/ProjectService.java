@@ -18,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.model.FileHeader;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -284,13 +286,13 @@ public class ProjectService {
         return data;
     }
 
-    public InvitedRepoListResponse invitedRepoList(Long userId) {
+    public InvitedRepoListResponse invitedRepoList(Long userId, Pageable pageable) {
         InvitedRepoListResponse data = new InvitedRepoListResponse();
 
-        List<InvitedRepoInfo> projectListByUserId = inviteRepository.findProjectListByUserId(userId);
-        data.setRepoList(projectListByUserId);
-
-        data.setRepoCnt(projectListByUserId.stream().count());
+        PageImpl<InvitedRepoInfo> findInvitedRepoList = inviteRepository.findProjectListByUserId(userId, pageable);
+        data.setRepoList(findInvitedRepoList.getContent());
+        data.setCurrentPage(findInvitedRepoList.getNumber());
+        data.setTotalPage(findInvitedRepoList.getTotalPages());
 
         return data;
     }

@@ -6,6 +6,7 @@ import fiveguys.webide.api.project.service.ProjectService;
 import fiveguys.webide.common.dto.ResponseDto;
 import fiveguys.webide.config.auth.LoginUser;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -99,9 +100,10 @@ public class ProjectController {
     }
 
     @GetMapping("/invited")
-    public ResponseDto<InvitedRepoListResponse> invitedRepoList(@AuthenticationPrincipal LoginUser loginUser) {
+    public ResponseDto<InvitedRepoListResponse> invitedRepoList(@AuthenticationPrincipal LoginUser loginUser,
+                                                                Pageable pageable) {
 
-        return ResponseDto.success("초대된 레포 보기 성공", projectService.invitedRepoList(loginUser.getUser().getId()));
+        return ResponseDto.success("초대된 레포 보기 성공", projectService.invitedRepoList(loginUser.getUser().getId(), pageable));
     }
 
     @PostMapping("/{repoId}/bookmark")

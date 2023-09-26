@@ -15,5 +15,5 @@ public interface InviteRepositoryCustom {
 
     List<InvitedUser> findInviteListByProjectId(Long projectId);
 
-    List<InvitedRepoInfo> findProjectListByUserId(Long userId);
+    PageImpl<InvitedRepoInfo> findProjectListByUserId(Long userId, Pageable pageable);
 }

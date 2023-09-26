@@ -53,14 +53,21 @@ public class InviteRepositoryImpl implements InviteRepositoryCustom {
     }
 
     @Override
-    public List<InvitedRepoInfo> findProjectListByUserId(Long userId) {
+    public PageImpl<InvitedRepoInfo> findProjectListByUserId(Long userId, Pageable pageable) {
 
         List<InvitedRepoInfo> findInvitedRepoInfoList = jpaQueryFactory.select(Projections.constructor(InvitedRepoInfo.class,
                         project.id, project.repoName, project.createdAt, project.modifiedAt, project.bookmark, user.nickname))
                 .from(invite, project, user)
                 .where(invite.userId.eq(userId), invite.projectId.eq(project.id), user.id.eq(project.userId))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
                 .fetch();
 
-        return findInvitedRepoInfoList;
+        Long count = jpaQueryFactory.select(project.count())
+                .from(invite, project, user)
+                .where(invite.userId.eq(userId), invite.projectId.eq(project.id), user.id.eq(project.userId))
+                .fetchOne();
+
+        return new PageImpl<>(findInvitedRepoInfoList, pageable, count);
     }
 }
