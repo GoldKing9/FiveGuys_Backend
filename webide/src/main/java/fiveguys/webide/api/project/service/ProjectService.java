@@ -8,16 +8,28 @@ import com.amazonaws.services.s3.model.*;
 import fiveguys.webide.api.project.dto.request.*;
 import fiveguys.webide.api.project.dto.response.FileReadResponse;
 import fiveguys.webide.common.dto.ResponseDto;
+import fiveguys.webide.api.project.dto.request.FileCreateRequest;
+import fiveguys.webide.api.project.dto.request.FolderCreateRequest;
+import fiveguys.webide.api.project.dto.response.*;
+import fiveguys.webide.common.error.ErrorCode;
+import fiveguys.webide.common.error.GlobalException;
+import fiveguys.webide.config.auth.LoginUser;
+import fiveguys.webide.domain.invite.Invite;
+import fiveguys.webide.domain.project.Project;
+import fiveguys.webide.repository.invite.InviteRepository;
 import fiveguys.webide.repository.project.ProjectRepository;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import net.lingala.zip4j.ZipFile;
+import net.lingala.zip4j.model.FileHeader;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.nio.charset.Charset;
+import java.util.*;
 
 
 @Service
@@ -26,6 +38,13 @@ import java.io.InputStreamReader;
 public class ProjectService {
     private final AmazonS3Client amazonS3Client;
     private final ProjectRepository projectRepository;
+    private final InviteRepository inviteRepository;
+    private String localLocation = "/src/main/resources/tempStore/";
+
+    @PostConstruct
+    public void init() {
+        localLocation = System.getProperty("user.dir") + localLocation;
+    }
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
@@ -138,6 +157,153 @@ public class ProjectService {
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentLength(newContentBytes.length);
         amazonS3Client.putObject(bucket, path, new ByteArrayInputStream(newContentBytes), metadata);
+      
+    @Transactional
+    public CreateRepoResponse createRepo(LoginUser loginUser, String repoName, MultipartFile file) throws IOException {
+        String nickname = loginUser.getUser().getNickname();
+
+        String uploadFileName = file.getOriginalFilename();
+        String projectName = uploadFileName.substring(0, uploadFileName.lastIndexOf("."));
+        System.out.println("projectName = " + projectName);
+
+        String uploadFullPath = localLocation + uploadFileName;
+        File localUploadFile = new File(uploadFullPath);
+        file.transferTo(localUploadFile);
+
+        ZipFile zipFile = new ZipFile(uploadFullPath);
+        String unzipPath = localLocation;
+        zipFile.setCharset(Charset.forName("UTF-8"));
+        zipFile.extractAll(unzipPath);
+
+        List<FileHeader> fileHeaders = zipFile.getFileHeaders();
+        for (FileHeader fileHeader : fileHeaders) {
+            System.out.println(fileHeader.getFileName());
+            if (fileHeader.isDirectory()) {
+                ObjectMetadata metadata = new ObjectMetadata();
+                byte[] content = new byte[0];
+                metadata.setContentLength(0);
+
+                amazonS3Client.putObject(bucket,nickname + "/" + fileHeader.getFileName(),new ByteArrayInputStream(content),metadata);
+            } else {
+                File localUnzipFile = new File(unzipPath + fileHeader.getFileName());
+
+                amazonS3Client.putObject(new PutObjectRequest(bucket, nickname + "/" + fileHeader.getFileName(), localUnzipFile)
+                        .withCannedAcl(CannedAccessControlList.PublicRead));
+            }
+        }
+
+        deleteDirectory(new File(localLocation + projectName));
+        localUploadFile.delete();
+
+        Project saveProject = projectRepository.save(Project.builder()
+                .userId(loginUser.getUser().getId())
+                .repoName(repoName)
+                .projectName(projectName)
+                .bookmark(false)
+                .build());
+
+        return new CreateRepoResponse(saveProject.getId(), projectName);
+    }
+    public static boolean deleteDirectory(File dir) {
+        if (dir.isDirectory()) {
+            File[] children = dir.listFiles();
+            if (children != null) {
+                for (File child : children) {
+                    boolean success = deleteDirectory(child);
+                    if (!success) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return dir.delete();
+    }
+
+    public FileTreeResponse fileTree(String nickname, String projectName) {
+        ObjectListing objectListing = amazonS3Client.listObjects(bucket, nickname + "/" + projectName);
+        List<S3ObjectSummary> s3ObjectSummaries = objectListing.getObjectSummaries();
+
+        FileTreeResponse data = new FileTreeResponse(projectName, "folder");
+        for(S3ObjectSummary s3object : s3ObjectSummaries){
+            String fileKey = s3object.getKey();
+            String fileName = fileKey.replace(nickname + "/" + projectName + "/", "");
+
+            String[] fileParts = fileName.split("/");
+            data.insert(fileParts, 0);
+        }
+
+        return data;
+    }
+
+
+    @Transactional
+    public void deleteRepo(String nickname, Long repoId) {
+        Project findProject = projectRepository.findById(repoId)
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_EXIST_PROJECT));
+
+        String projectName = findProject.getProjectName();
+        ObjectListing objectListing = amazonS3Client.listObjects(bucket, nickname + "/" + projectName);
+        List<S3ObjectSummary> s3ObjectSummaries = objectListing.getObjectSummaries();
+
+        for(S3ObjectSummary s3object : s3ObjectSummaries){
+            String fileKey = s3object.getKey();
+            amazonS3Client.deleteObject(bucket, fileKey);
+        }
+
+        projectRepository.delete(findProject);
+
+        List<Invite> findInvites = inviteRepository.findAllByProjectId(repoId);
+        inviteRepository.deleteAllInBatch(findInvites);
+    }
+
+    @Transactional
+    public void changeRepoName(Long repoId, String repoName) {
+        Project findProject = projectRepository.findById(repoId)
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_EXIST_PROJECT));
+
+        findProject.changeRepoName(repoName);
+    }
+
+    public MyRepoListResponse myRepoList(Long userId) {
+        List<Project> findProjectList = projectRepository.findAllByUserId(userId);
+        long repoCnt = findProjectList.stream().count();
+
+        MyRepoListResponse data = new MyRepoListResponse();
+        for (Project findProject : findProjectList) {
+            List<InvitedUser> findIvitedUserList = inviteRepository.findInviteListByProjectId(findProject.getId());
+
+            data.getRepoList().add(RepoInfo.builder()
+                    .repoId(findProject.getId())
+                    .repoName(findProject.getRepoName())
+                    .createdAt(findProject.getCreatedAt())
+                    .updatedAt(findProject.getModifiedAt())
+                    .bookmark(findProject.isBookmark())
+                    .invitedUser(findIvitedUserList)
+                    .invitedUserCnt(findIvitedUserList.stream().count())
+                    .build());
+        }
+        data.setRepoCnt(repoCnt);
+
+        return data;
+    }
+
+    public InvitedRepoListResponse invitedRepoList(Long userId) {
+        InvitedRepoListResponse data = new InvitedRepoListResponse();
+
+        List<InvitedRepoInfo> projectListByUserId = inviteRepository.findProjectListByUserId(userId);
+        data.setRepoList(projectListByUserId);
+
+        data.setRepoCnt(projectListByUserId.stream().count());
+
+        return data;
+    }
+
+
+    @Transactional
+    public void bookmarkRepo(Long repoId) {
+        Project findProject = projectRepository.findById(repoId).get();
+        findProject.changeBookmark();
     }
 }
 
