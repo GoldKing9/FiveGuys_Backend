@@ -6,6 +6,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import fiveguys.webide.api.invite.dto.response.UserInfoDto;
 import fiveguys.webide.api.project.dto.response.InvitedRepoInfo;
 import fiveguys.webide.api.project.dto.response.InvitedUser;
+import fiveguys.webide.domain.project.Project;
 import fiveguys.webide.domain.project.QProject;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageImpl;

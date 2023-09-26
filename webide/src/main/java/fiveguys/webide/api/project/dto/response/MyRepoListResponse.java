@@ -9,5 +9,6 @@ import java.util.List;
 @Getter @Setter
 public class MyRepoListResponse{
     private List<RepoInfo> repoList = new ArrayList<>();
-    private Long repoCnt;
+    private int currentPage;
+    private int totalPage;
 }

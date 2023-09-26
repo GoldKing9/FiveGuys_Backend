@@ -263,12 +263,11 @@ public class ProjectService {
         findProject.changeRepoName(repoName);
     }
 
-    public MyRepoListResponse myRepoList(Long userId) {
-        List<Project> findProjectList = projectRepository.findAllByUserId(userId);
-        long repoCnt = findProjectList.stream().count();
+    public MyRepoListResponse myRepoList(Long userId, Pageable pageable) {
+        PageImpl<Project> findProjectList = projectRepository.findProjectListByUserId(userId, pageable);
 
         MyRepoListResponse data = new MyRepoListResponse();
-        for (Project findProject : findProjectList) {
+        for (Project findProject : findProjectList.getContent()) {
             List<InvitedUser> findIvitedUserList = inviteRepository.findInviteListByProjectId(findProject.getId());
 
             data.getRepoList().add(RepoInfo.builder()
@@ -281,7 +280,9 @@ public class ProjectService {
                     .invitedUserCnt(findIvitedUserList.stream().count())
                     .build());
         }
-        data.setRepoCnt(repoCnt);
+
+        data.setCurrentPage(findProjectList.getNumber());
+        data.setTotalPage(findProjectList.getTotalPages());
 
         return data;
     }
