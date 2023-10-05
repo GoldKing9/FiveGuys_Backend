@@ -5,6 +5,6 @@ import lombok.Getter;
 
 @AllArgsConstructor @Getter
 public class CreateRepoResponse {
-    private Long projectId;
-    private String projectName;
+    private Long repoId;
+    private String repoName;
 }

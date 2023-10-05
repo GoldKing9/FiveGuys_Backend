@@ -155,7 +155,7 @@ public class ProjectService {
         metadata.setContentLength(newContentBytes.length);
         amazonS3Client.putObject(bucket, path, new ByteArrayInputStream(newContentBytes), metadata);
     }
-      
+
     @Transactional
     public CreateRepoResponse createRepo(LoginUser loginUser, String repoName, MultipartFile file) throws IOException {
         String nickname = loginUser.getUser().getNickname();
@@ -170,7 +170,7 @@ public class ProjectService {
 
         ZipFile zipFile = new ZipFile(uploadFullPath);
         String unzipPath = localLocation;
-        zipFile.setCharset(Charset.forName("UTF-8"));
+//        zipFile.setCharset(Charset.forName("UTF-8"));
         zipFile.extractAll(unzipPath);
 
         List<FileHeader> fileHeaders = zipFile.getFileHeaders();
@@ -200,7 +200,7 @@ public class ProjectService {
                 .bookmark(false)
                 .build());
 
-        return new CreateRepoResponse(saveProject.getId(), projectName);
+        return new CreateRepoResponse(saveProject.getId(), repoName);
     }
     public static boolean deleteDirectory(File dir) {
         if (dir.isDirectory()) {
@@ -222,13 +222,13 @@ public class ProjectService {
         ObjectListing objectListing = amazonS3Client.listObjects(bucket, nickname + "/" + projectName);
         List<S3ObjectSummary> s3ObjectSummaries = objectListing.getObjectSummaries();
 
-        FileTreeResponse data = new FileTreeResponse(projectName, "folder");
+        FileTreeResponse data = new FileTreeResponse(projectName, "folder", nickname + "/" + projectName + "/");
         for(S3ObjectSummary s3object : s3ObjectSummaries){
             String fileKey = s3object.getKey();
             String fileName = fileKey.replace(nickname + "/" + projectName + "/", "");
 
             String[] fileParts = fileName.split("/");
-            data.insert(fileParts, 0);
+            data.insert(fileParts, 0, fileKey);
         }
 
         return data;

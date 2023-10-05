@@ -8,16 +8,19 @@ import java.util.Objects;
 
 @Getter
 public class FileTreeResponse {
+
     private String name;
     private String type;
+    private String path;
     private List<FileTreeResponse> tree = new ArrayList<>();
 
-    public FileTreeResponse(String name, String type) {
+    public FileTreeResponse(String name, String type, String path) {
+        this.path = path;
         this.name = name;
         this.type = type;
     }
 
-    public void insert(String[] fileParts, int index) {
+    public void insert(String[] fileParts, int index, String path) {
         if (index == fileParts.length) return;
 
         String filePart = fileParts[index];
@@ -28,12 +31,12 @@ public class FileTreeResponse {
         } else {
             fileType = "folder";
         }
-        FileTreeResponse newTreeNode = new FileTreeResponse(filePart, fileType);
+        FileTreeResponse newTreeNode = new FileTreeResponse(filePart, fileType, path);
         if(!tree.contains(newTreeNode)) {
             tree.add(newTreeNode);
         }
 
-        tree.get(tree.indexOf(newTreeNode)).insert(fileParts, index+1);
+        tree.get(tree.indexOf(newTreeNode)).insert(fileParts, index+1, path);
     }
 
     @Override
