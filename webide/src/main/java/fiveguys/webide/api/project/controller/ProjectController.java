@@ -56,7 +56,8 @@ public class ProjectController {
     @PutMapping("/file/tree/{*path}")
     public ResponseDto<Void> fileChangeBody(@RequestBody FileNewBodyRequest fileNewBodyRequest, @PathVariable String path) {
         projectService.fileChangeBody(fileNewBodyRequest, path);
-        return ResponseDto.success("폴더내용 수정 성공", null);
+      
+        return ResponseDto.success("파일내용 수정 성공", null);
     }
 
     @PostMapping

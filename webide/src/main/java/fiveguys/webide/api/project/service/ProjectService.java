@@ -49,23 +49,37 @@ public class ProjectService {
     public void fileCreate(FileCreateRequest fileCreateRequest) {
         try{
             String fileName = fileCreateRequest.getPath()+"/"+fileCreateRequest.getFileName();
+            // 해당 경로에 파일이 이미 존재하는지 확인
+            if (amazonS3Client.doesObjectExist(bucket, fileName)) {
+                throw new GlobalException(ErrorCode.FILE_ALREADY_EXISTS);
+            }
 
             ObjectMetadata metadata = new ObjectMetadata();
             byte[] content = new byte[0];
             metadata.setContentLength(0);
             amazonS3Client.putObject(bucket,fileName,new ByteArrayInputStream(content),metadata);
-        } catch (Exception e){
+        }catch (GlobalException e) {
+            // 이미 존재하는 파일에 대한 예외 처리
+            throw e;
+        }catch (Exception e){
             e.printStackTrace();
         }
     }
     public void folderCreate(FolderCreateRequest folderCreateRequest){
         try{
             String fileName = folderCreateRequest.getPath()+"/"+folderCreateRequest.getFolderName()+"/";
+            if (amazonS3Client.doesObjectExist(bucket, fileName)) {
+                throw new GlobalException(ErrorCode.FOLDER_ALREADY_EXISTS);
+            }
 
             ObjectMetadata metadata = new ObjectMetadata();
             byte[] content = new byte[0];
             metadata.setContentLength(0);
             amazonS3Client.putObject(bucket,fileName,new ByteArrayInputStream(content),metadata);
+        }
+        catch (GlobalException e) {
+            // 이미 존재하는 파일에 대한 예외 처리
+            throw e;
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -155,7 +169,7 @@ public class ProjectService {
         metadata.setContentLength(newContentBytes.length);
         amazonS3Client.putObject(bucket, path, new ByteArrayInputStream(newContentBytes), metadata);
     }
-      
+
     @Transactional
     public CreateRepoResponse createRepo(LoginUser loginUser, String repoName, MultipartFile file) throws IOException {
         String nickname = loginUser.getUser().getNickname();
