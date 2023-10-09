@@ -36,6 +36,11 @@ out/
 ### VS Code ###
 .vscode/
 
+src/main/generated/
 *.yml
 *.properties
-*.http
+
+Dockerfile
+requests.http
+
+src/main/java/fiveguys/webide/ignore/

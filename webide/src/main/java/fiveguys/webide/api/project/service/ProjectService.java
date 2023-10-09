@@ -2,14 +2,9 @@ package fiveguys.webide.api.project.service;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
-import com.amazonaws.services.s3.AmazonS3Builder;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.*;
 import fiveguys.webide.api.project.dto.request.*;
-import fiveguys.webide.api.project.dto.response.FileReadResponse;
-import fiveguys.webide.common.dto.ResponseDto;
-import fiveguys.webide.api.project.dto.request.FileCreateRequest;
-import fiveguys.webide.api.project.dto.request.FolderCreateRequest;
 import fiveguys.webide.api.project.dto.response.*;
 import fiveguys.webide.common.error.ErrorCode;
 import fiveguys.webide.common.error.GlobalException;
@@ -23,13 +18,15 @@ import lombok.RequiredArgsConstructor;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.model.FileHeader;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.List;
 
 
 @Service
@@ -39,11 +36,11 @@ public class ProjectService {
     private final AmazonS3Client amazonS3Client;
     private final ProjectRepository projectRepository;
     private final InviteRepository inviteRepository;
-    private String localLocation = "/src/main/resources/tempStore/";
+    private String localLocation;
 
     @PostConstruct
     public void init() {
-        localLocation = System.getProperty("user.dir") + localLocation;
+        localLocation = System.getProperty("user.dir") + "/";
     }
 
     @Value("${cloud.aws.s3.bucket}")
@@ -303,13 +300,13 @@ public class ProjectService {
         return data;
     }
 
-    public InvitedRepoListResponse invitedRepoList(Long userId) {
+    public InvitedRepoListResponse invitedRepoList(Long userId, Pageable pageable) {
         InvitedRepoListResponse data = new InvitedRepoListResponse();
 
-        List<InvitedRepoInfo> projectListByUserId = inviteRepository.findProjectListByUserId(userId);
-        data.setRepoList(projectListByUserId);
-
-        data.setRepoCnt(projectListByUserId.stream().count());
+        PageImpl<InvitedRepoInfo> findInvitedRepoList = inviteRepository.findProjectListByUserId(userId, pageable);
+        data.setRepoList(findInvitedRepoList.getContent());
+        data.setCurrentPage(findInvitedRepoList.getNumber());
+        data.setTotalPage(findInvitedRepoList.getTotalPages());
 
         return data;
     }
