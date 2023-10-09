@@ -5,6 +5,7 @@ import fiveguys.webide.api.invite.dto.response.UserInfoDto;
 import fiveguys.webide.api.project.dto.response.InvitedRepoInfo;
 import fiveguys.webide.api.project.dto.response.InvitedUser;
 import fiveguys.webide.api.project.service.ProjectService;
+import fiveguys.webide.domain.project.Project;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 

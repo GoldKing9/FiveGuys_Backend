@@ -184,7 +184,7 @@ public class ProjectService {
 
         ZipFile zipFile = new ZipFile(uploadFullPath);
         String unzipPath = localLocation;
-        zipFile.setCharset(Charset.forName("UTF-8"));
+//        zipFile.setCharset(Charset.forName("UTF-8"));
         zipFile.extractAll(unzipPath);
 
         List<FileHeader> fileHeaders = zipFile.getFileHeaders();
@@ -214,7 +214,7 @@ public class ProjectService {
                 .bookmark(false)
                 .build());
 
-        return new CreateRepoResponse(saveProject.getId(), projectName);
+        return new CreateRepoResponse(saveProject.getId(), repoName);
     }
     public static boolean deleteDirectory(File dir) {
         if (dir.isDirectory()) {
@@ -236,13 +236,13 @@ public class ProjectService {
         ObjectListing objectListing = amazonS3Client.listObjects(bucket, nickname + "/" + projectName);
         List<S3ObjectSummary> s3ObjectSummaries = objectListing.getObjectSummaries();
 
-        FileTreeResponse data = new FileTreeResponse(projectName, "folder");
+        FileTreeResponse data = new FileTreeResponse(projectName, "folder", nickname + "/" + projectName + "/");
         for(S3ObjectSummary s3object : s3ObjectSummaries){
             String fileKey = s3object.getKey();
             String fileName = fileKey.replace(nickname + "/" + projectName + "/", "");
 
             String[] fileParts = fileName.split("/");
-            data.insert(fileParts, 0);
+            data.insert(fileParts, 0, fileKey);
         }
 
         return data;
@@ -277,12 +277,11 @@ public class ProjectService {
         findProject.changeRepoName(repoName);
     }
 
-    public MyRepoListResponse myRepoList(Long userId) {
-        List<Project> findProjectList = projectRepository.findAllByUserId(userId);
-        long repoCnt = findProjectList.stream().count();
+    public MyRepoListResponse myRepoList(Long userId, Pageable pageable) {
+        PageImpl<Project> findProjectList = projectRepository.findProjectListByUserId(userId, pageable);
 
         MyRepoListResponse data = new MyRepoListResponse();
-        for (Project findProject : findProjectList) {
+        for (Project findProject : findProjectList.getContent()) {
             List<InvitedUser> findIvitedUserList = inviteRepository.findInviteListByProjectId(findProject.getId());
 
             data.getRepoList().add(RepoInfo.builder()
@@ -295,7 +294,9 @@ public class ProjectService {
                     .invitedUserCnt(findIvitedUserList.stream().count())
                     .build());
         }
-        data.setRepoCnt(repoCnt);
+
+        data.setCurrentPage(findProjectList.getNumber());
+        data.setTotalPage(findProjectList.getTotalPages());
 
         return data;
     }

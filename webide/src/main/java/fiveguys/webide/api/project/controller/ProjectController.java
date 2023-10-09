@@ -95,9 +95,9 @@ public class ProjectController {
     }
 
     @GetMapping("/my")
-    public ResponseDto<MyRepoListResponse> myRepoList(@AuthenticationPrincipal LoginUser loginUser) {
+    public ResponseDto<MyRepoListResponse> myRepoList(@AuthenticationPrincipal LoginUser loginUser, Pageable pageable) {
 
-        return ResponseDto.success("내가 만든 레포 보기 성공", projectService.myRepoList(loginUser.getUser().getId()));
+        return ResponseDto.success("내가 만든 레포 보기 성공", projectService.myRepoList(loginUser.getUser().getId(), pageable));
     }
 
     @GetMapping("/invited")
