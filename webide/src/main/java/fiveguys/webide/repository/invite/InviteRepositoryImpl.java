@@ -57,7 +57,7 @@ public class InviteRepositoryImpl implements InviteRepositoryCustom {
     public PageImpl<InvitedRepoInfo> findProjectListByUserId(Long userId, Pageable pageable) {
 
         List<InvitedRepoInfo> findInvitedRepoInfoList = jpaQueryFactory.select(Projections.constructor(InvitedRepoInfo.class,
-                        project.id, project.repoName, project.createdAt, project.modifiedAt, project.bookmark, user.nickname))
+                        project.id, project.repoName, project.projectName, project.createdAt, project.modifiedAt, project.bookmark, user.nickname))
                 .from(invite, project, user)
                 .where(invite.userId.eq(userId), invite.projectId.eq(project.id), user.id.eq(project.userId))
                 .offset(pageable.getOffset())

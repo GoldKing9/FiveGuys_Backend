@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 public class InvitedRepoInfo {
     private Long repoId;
     private String repoName;
+    private String projectName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private boolean bookmark;

@@ -214,7 +214,7 @@ public class ProjectService {
                 .bookmark(false)
                 .build());
 
-        return new CreateRepoResponse(saveProject.getId(), repoName);
+        return new CreateRepoResponse(saveProject.getId(), projectName);
     }
     public static boolean deleteDirectory(File dir) {
         if (dir.isDirectory()) {
@@ -287,6 +287,7 @@ public class ProjectService {
             data.getRepoList().add(RepoInfo.builder()
                     .repoId(findProject.getId())
                     .repoName(findProject.getRepoName())
+                    .projectName(findProject.getProjectName())
                     .createdAt(findProject.getCreatedAt())
                     .updatedAt(findProject.getModifiedAt())
                     .bookmark(findProject.isBookmark())
