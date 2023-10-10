@@ -12,6 +12,7 @@ import java.util.List;
 public class RepoInfo {
     private Long repoId;
     private String repoName;
+    private String projectName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private boolean bookmark;
