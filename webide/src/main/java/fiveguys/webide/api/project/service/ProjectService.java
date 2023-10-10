@@ -26,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 
@@ -214,7 +215,16 @@ public class ProjectService {
                 .bookmark(false)
                 .build());
 
-        return new CreateRepoResponse(saveProject.getId(), projectName);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String formatCreatedAt = saveProject.getCreatedAt().format(formatter);
+        String formatUpdatedAt = saveProject.getModifiedAt().format(formatter);
+
+        return CreateRepoResponse.builder()
+                .repoId(saveProject.getId())
+                .projectName(projectName)
+                .createdAt(formatCreatedAt)
+                .updatedAt(formatUpdatedAt)
+                .build();
     }
     public static boolean deleteDirectory(File dir) {
         if (dir.isDirectory()) {
