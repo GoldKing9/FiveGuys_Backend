@@ -79,8 +79,7 @@ public class ProjectService {
             byte[] content = new byte[0];
             metadata.setContentLength(0);
             amazonS3Client.putObject(bucket,fileName,new ByteArrayInputStream(content),metadata);
-        }
-        catch (GlobalException e) {
+        }catch (GlobalException e) {
             // 이미 존재하는 파일에 대한 예외 처리
             throw e;
         }catch (Exception e){
@@ -90,6 +89,9 @@ public class ProjectService {
 
     public FileReadResponse fileRead(String path) {
         try {
+            if (!amazonS3Client.doesObjectExist(bucket, path)) {
+                throw new GlobalException(ErrorCode.OBJECT_NOT_FOUND);
+            }
             S3Object s3Object = amazonS3Client.getObject(bucket, path);
             S3ObjectInputStream objectInputStream = s3Object.getObjectContent();
             BufferedReader reader = new BufferedReader(new InputStreamReader(objectInputStream));
@@ -106,7 +108,10 @@ public class ProjectService {
                     .lines(lines)
                     .size(248)
                     .build();
-        } catch (IOException e) {
+        }catch (GlobalException e) {
+            // 해당 경로에 없는거에대한 예외처리
+            throw e;
+        }catch (IOException e) {
             e.printStackTrace();
             return FileReadResponse.builder().build();
         }
@@ -114,17 +119,26 @@ public class ProjectService {
 
     public void fileFolderDelete(String path) {
         try {
+            if (!amazonS3Client.doesObjectExist(bucket, path)) {
+                throw new GlobalException(ErrorCode.OBJECT_NOT_FOUND);
+            }
             amazonS3Client.deleteObject(bucket, path);
-        } catch (AmazonServiceException e) {
+        }catch (GlobalException e) {
+            // 해당 경로에 없는거에대한 예외처리
+            throw e;
+        }catch (AmazonServiceException e) {
             // AmazonS3 서비스 예외 처리
             e.printStackTrace();
-        } catch (AmazonClientException e) {
+        }catch (AmazonClientException e) {
             // AmazonS3 클라이언트 예외 처리
             e.printStackTrace();
         }
     }
     public void fileRename(FileRenameRequest fileRenameRequest, String path){
         try {
+            if (!amazonS3Client.doesObjectExist(bucket, path)) {
+                throw new GlobalException(ErrorCode.OBJECT_NOT_FOUND);
+            }
             // 기존 파일의 내용을 읽어옵니다.
             S3Object s3Object = amazonS3Client.getObject(bucket, path);
             S3ObjectInputStream objectInputStream = s3Object.getObjectContent();
@@ -145,12 +159,18 @@ public class ProjectService {
             byte[] contentBytes = content.toString().getBytes(); // 파일 내용을 바이트 배열로 변환
             metadata.setContentLength(contentBytes.length);
             amazonS3Client.putObject(bucket, newFileName, new ByteArrayInputStream(contentBytes), metadata);
+        }catch (GlobalException e) {
+            // 해당 경로에 없는거에대한 예외처리
+            throw e;
         } catch (IOException e) {
             e.printStackTrace();
         }
 
     }
     public void folderRename(FolderRenameRequest folderRenameRequest, String path){
+        if (!amazonS3Client.doesObjectExist(bucket, path)) {
+            throw new GlobalException(ErrorCode.OBJECT_NOT_FOUND);
+        }
         ObjectListing objectListing = amazonS3Client.listObjects(bucket, path);
         for(S3ObjectSummary objectSummary : objectListing.getObjectSummaries()){
             String sourceObjectKey = objectSummary.getKey();
@@ -166,6 +186,9 @@ public class ProjectService {
     }
 
     public void fileChangeBody(FileNewBodyRequest fileNewBodyRequest,String path) {
+        if (!amazonS3Client.doesObjectExist(bucket, path)) {
+            throw new GlobalException(ErrorCode.OBJECT_NOT_FOUND);
+        }
         byte[] newContentBytes = fileNewBodyRequest.getBody().getBytes();
         amazonS3Client.deleteObject(bucket, path);
         ObjectMetadata metadata = new ObjectMetadata();
